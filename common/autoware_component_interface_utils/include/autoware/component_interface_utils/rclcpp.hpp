@@ -145,8 +145,14 @@ public:
     MessagePtrCallback<SharedPtrT, InstanceT> && callback) const
   {
     using SpecT = typename SharedPtrT::element_type::SpecType;
-    using std::placeholders::_1;
-    sub = create_subscription_impl<SpecT>(interface_, std::bind(callback, instance, _1));
+    // ci-libcxx-bind: a lambda, not std::bind. libc++'s std::__bind has an OVERLOADED
+    // operator(), so rclcpp::function_traits' `&FunctionT::operator()` cannot resolve
+    // ("reference to overloaded function could not be resolved"). The parameter types are
+    // spelled out deliberately -- a generic lambda's templated operator() fails the same way.
+    sub = create_subscription_impl<SpecT>(
+      interface_, [instance, callback](const typename SpecT::Message::ConstSharedPtr msg) {
+        (instance->*callback)(msg);
+      });
   }
 
   /// Create a subscription wrapper for reference callback.
@@ -157,8 +163,14 @@ public:
     MessageRefCallback<SharedPtrT, InstanceT> && callback) const
   {
     using SpecT = typename SharedPtrT::element_type::SpecType;
-    using std::placeholders::_1;
-    sub = create_subscription_impl<SpecT>(interface_, std::bind(callback, instance, _1));
+    // ci-libcxx-bind: a lambda, not std::bind. libc++'s std::__bind has an OVERLOADED
+    // operator(), so rclcpp::function_traits' `&FunctionT::operator()` cannot resolve
+    // ("reference to overloaded function could not be resolved"). The parameter types are
+    // spelled out deliberately -- a generic lambda's templated operator() fails the same way.
+    sub = create_subscription_impl<SpecT>(
+      interface_, [instance, callback](const typename SpecT::Message & msg) {
+        (instance->*callback)(msg);
+      });
   }
 
   /// Create a service wrapper for logging.
@@ -169,9 +181,18 @@ public:
     CallbackGroup group = nullptr) const
   {
     using SpecT = typename SharedPtrT::element_type::SpecType;
-    using std::placeholders::_1;
-    using std::placeholders::_2;
-    srv = create_service_impl<SpecT>(interface_, std::bind(callback, instance, _1, _2), group);
+    // ci-libcxx-bind: a lambda, not std::bind. libc++'s std::__bind has an OVERLOADED
+    // operator(), so rclcpp::function_traits' `&FunctionT::operator()` cannot resolve
+    // ("reference to overloaded function could not be resolved"). The parameter types are
+    // spelled out deliberately -- a generic lambda's templated operator() fails the same way.
+    srv = create_service_impl<SpecT>(
+      interface_,
+      [instance, callback](
+        const typename SpecT::Service::Request::SharedPtr req,
+        const typename SpecT::Service::Response::SharedPtr res) {
+        (instance->*callback)(req, res);
+      },
+      group);
   }
 
   /// Create a publisher, returning it instead of assigning to an out-parameter.
@@ -195,8 +216,14 @@ public:
   typename Subscription<SpecT, NodeT>::SharedPtr create_subscription(
     InstanceT * instance, SpecMessagePtrCallback<SpecT, InstanceT> && callback)
   {
-    using std::placeholders::_1;
-    return create_subscription<SpecT>(std::bind(callback, instance, _1));
+    // ci-libcxx-bind: a lambda, not std::bind. libc++'s std::__bind has an OVERLOADED
+    // operator(), so rclcpp::function_traits' `&FunctionT::operator()` cannot resolve
+    // ("reference to overloaded function could not be resolved"). The parameter types are
+    // spelled out deliberately -- a generic lambda's templated operator() fails the same way.
+    return create_subscription<SpecT>(
+      [instance, callback](const typename SpecT::Message::ConstSharedPtr msg) {
+        (instance->*callback)(msg);
+      });
   }
 
   /// Create a subscription bound to a member function taking the message by reference.
@@ -204,8 +231,14 @@ public:
   typename Subscription<SpecT, NodeT>::SharedPtr create_subscription(
     InstanceT * instance, SpecMessageRefCallback<SpecT, InstanceT> && callback)
   {
-    using std::placeholders::_1;
-    return create_subscription<SpecT>(std::bind(callback, instance, _1));
+    // ci-libcxx-bind: a lambda, not std::bind. libc++'s std::__bind has an OVERLOADED
+    // operator(), so rclcpp::function_traits' `&FunctionT::operator()` cannot resolve
+    // ("reference to overloaded function could not be resolved"). The parameter types are
+    // spelled out deliberately -- a generic lambda's templated operator() fails the same way.
+    return create_subscription<SpecT>(
+      [instance, callback](const typename SpecT::Message & msg) {
+        (instance->*callback)(msg);
+      });
   }
 
   /// Create a service server, returning it instead of assigning to an out-parameter.
@@ -223,9 +256,17 @@ public:
     InstanceT * instance, SpecServiceCallback<SpecT, InstanceT> && callback,
     rclcpp::CallbackGroup::SharedPtr group = nullptr)
   {
-    using std::placeholders::_1;
-    using std::placeholders::_2;
-    return create_service<SpecT>(std::bind(callback, instance, _1, _2), group);
+    // ci-libcxx-bind: a lambda, not std::bind. libc++'s std::__bind has an OVERLOADED
+    // operator(), so rclcpp::function_traits' `&FunctionT::operator()` cannot resolve
+    // ("reference to overloaded function could not be resolved"). The parameter types are
+    // spelled out deliberately -- a generic lambda's templated operator() fails the same way.
+    return create_service<SpecT>(
+      [instance, callback](
+        const typename SpecT::Service::Request::SharedPtr req,
+        const typename SpecT::Service::Response::SharedPtr res) {
+        (instance->*callback)(req, res);
+      },
+      group);
   }
 
   /// Create a service client, returning it instead of assigning to an out-parameter.
